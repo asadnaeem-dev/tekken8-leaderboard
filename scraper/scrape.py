@@ -134,17 +134,28 @@ def update_player_character_usages(cur):
                 key = (p_id, c_id)
                 usages[key] = usages.get(key, 0) + 1
                 
-    # Calculate usage percentages
+    # Calculate usage percentages and determine unique main character per player
     player_totals = {}
     for (p_id, c_id), count in usages.items():
         player_totals[p_id] = player_totals.get(p_id, 0) + count
         
+    # Determine the unique main character for each player
+    main_character_map = {}
+    for (p_id, c_id), count in usages.items():
+        if p_id not in main_character_map:
+            main_character_map[p_id] = (c_id, count)
+        else:
+            best_c_id, best_count = main_character_map[p_id]
+            if count > best_count:
+                main_character_map[p_id] = (c_id, count)
+            elif count == best_count:
+                # Tie-breaker: pick lexicographically smaller character UUID to ensure determinism
+                if str(c_id) < str(best_c_id):
+                    main_character_map[p_id] = (c_id, count)
+        
     for (p_id, c_id), count in usages.items():
         pct = (count / player_totals[p_id]) * 100
-        # Check if this character is the main (highest usage or first)
-        # For simplicity, if it's the only one or highest count, mark as main
-        # Let's see if this key has the maximum count for the player
-        is_main = count == max(usages[k] for k in usages if k[0] == p_id)
+        is_main = c_id == main_character_map[p_id][0]
         
         cur.execute(
             """
