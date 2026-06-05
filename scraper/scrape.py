@@ -7,12 +7,16 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import json
 import time
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Add parent directory to path to allow importing from scraper folder
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from mock_data import STANDINGS_2024, TOURNAMENT_RESULTS
 
-DB_URL = "postgresql://postgres:wallsplat_secret@localhost:5432/wallsplat"
+DB_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:wallsplat_secret@localhost:5432/wallsplat")
 
 POOL_PLAYERS_INFO = {
     "Joey Fury": {"real_name": "Joey D'Alessandro", "nationality": "United States", "country_code": "US", "flag_emoji": "🇺🇸"},

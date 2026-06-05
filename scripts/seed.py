@@ -1,8 +1,12 @@
 import os
 import psycopg2
 from psycopg2.extras import execute_values
+from dotenv import load_dotenv
 
-DB_URL = "postgresql://postgres:wallsplat_secret@localhost:5432/wallsplat"
+# Load environment variables
+load_dotenv()
+
+DB_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:wallsplat_secret@localhost:5432/wallsplat")
 
 # Characters data
 CHARACTERS = [
