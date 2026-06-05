@@ -336,12 +336,12 @@ export default function CompareClient({ players, initialData, initialP1, initial
               </div>
 
               <div className="grid grid-cols-3 text-center py-2 border-b border-[#1A1A1A] text-sm font-semibold">
-                <span className={highlightBestValueStr(compareData.player1.win_rate || '0', compareData.player2.win_rate || '0')}>
-                  {compareData.player1.win_rate || 'N/A'}%
+                <span className={highlightBestValueStr(compareData.player1.total_matches > 0 ? compareData.player1.win_rate : '0', compareData.player2.total_matches > 0 ? compareData.player2.win_rate : '0')}>
+                  {compareData.player1.total_matches > 0 ? `${compareData.player1.win_rate}%` : 'N/A'}
                 </span>
                 <span className="text-gray-500 uppercase text-xs tracking-wider">Win Rate</span>
-                <span className={highlightBestValueStr(compareData.player2.win_rate || '0', compareData.player1.win_rate || '0')}>
-                  {compareData.player2.win_rate || 'N/A'}%
+                <span className={highlightBestValueStr(compareData.player2.total_matches > 0 ? compareData.player2.win_rate : '0', compareData.player1.total_matches > 0 ? compareData.player1.win_rate : '0')}>
+                  {compareData.player2.total_matches > 0 ? `${compareData.player2.win_rate}%` : 'N/A'}
                 </span>
               </div>
 

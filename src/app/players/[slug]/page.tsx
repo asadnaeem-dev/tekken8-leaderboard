@@ -182,7 +182,7 @@ export default async function PlayerProfilePage({ params }: { params: { slug: st
           <div className="tekken-panel p-5 rounded-lg text-center">
             <div className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Win Rate</div>
             <div className="text-3xl font-black tekken-heading text-gradient-red">
-              {player.win_rate || 'N/A'}%
+              {player.total_matches > 0 ? `${player.win_rate}%` : 'N/A'}
             </div>
           </div>
           <div className="tekken-panel p-5 rounded-lg text-center">

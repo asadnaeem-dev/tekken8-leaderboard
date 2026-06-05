@@ -176,7 +176,8 @@ export default function LeaderboardClient({ initialRankings }: LeaderboardClient
                       {player.total_twt_pts.toLocaleString()} <span className="text-[10px] text-[#C8102E]">TWT</span>
                     </div>
                     <div className="text-xs text-gray-400 font-medium">
-                      {player.win_rate}% WR <span className="text-gray-600">({player.total_matches}m)</span>
+                      {player.total_matches > 0 ? `${player.win_rate}% WR` : 'N/A WR'}{' '}
+                      <span className="text-gray-600">({player.total_matches}m)</span>
                     </div>
                   </div>
                 </div>
