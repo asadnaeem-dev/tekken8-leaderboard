@@ -178,42 +178,6 @@ export default function CompareClient({ players, initialData, initialP1, initial
     return v1 > v2 ? 'text-[#FFD700] font-black' : 'text-gray-400 font-medium';
   };
 
-  const renderTornadoBar = (label: string, val1: number, val2: number, formattedVal1?: string, formattedVal2?: string) => {
-    const maxVal = Math.max(val1, val2) || 1;
-    const pct1 = (val1 / maxVal) * 100;
-    const pct2 = (val2 / maxVal) * 100;
-
-    return (
-      <div className="space-y-1.5 py-1">
-        <div className="flex justify-between items-center text-xs px-1 font-bold">
-          <span className={val1 > val2 ? 'text-[#FFD700]' : 'text-gray-400'}>
-            {formattedVal1 !== undefined ? formattedVal1 : val1}
-          </span>
-          <span className="text-gray-500 uppercase tracking-widest text-[9px]">{label}</span>
-          <span className={val2 > val1 ? 'text-[#FFD700]' : 'text-gray-400'}>
-            {formattedVal2 !== undefined ? formattedVal2 : val2}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-1 h-2.5 w-full rounded overflow-hidden">
-          <div className="w-full flex justify-end bg-[#1a1a1a]">
-            <div 
-              className={`h-full bg-gradient-to-l ${val1 >= val2 && val1 > 0 ? 'from-[#C8102E] to-red-900 shadow-[0_0_8px_rgba(200,16,46,0.3)]' : 'from-zinc-700 to-zinc-800'} transition-all duration-1000 ease-out`}
-              style={{ width: `${pct1}%` }}
-            />
-          </div>
-
-          <div className="w-full flex justify-start bg-[#1a1a1a]">
-            <div 
-              className={`h-full bg-gradient-to-r ${val2 >= val1 && val2 > 0 ? 'from-[#FFD700] to-amber-600 shadow-[0_0_8px_rgba(255,215,0,0.3)]' : 'from-zinc-700 to-zinc-800'} transition-all duration-1000 ease-out`}
-              style={{ width: `${pct2}%` }}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -400,45 +364,6 @@ export default function CompareClient({ players, initialData, initialP1, initial
                   {compareData.player2.total_wins || 0}
                 </span>
               </div>
-            </div>
-
-            <div className="border-t border-[#2A2A2A] my-6" />
-
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 text-center mb-3">
-                Visual Matrix Comparison
-              </h3>
-              {renderTornadoBar(
-                "TWT Points", 
-                compareData.player1.total_twt_pts || 0, 
-                compareData.player2.total_twt_pts || 0, 
-                (compareData.player1.total_twt_pts || 0).toLocaleString(), 
-                (compareData.player2.total_twt_pts || 0).toLocaleString()
-              )}
-              {renderTornadoBar(
-                "TWT Rank", 
-                compareData.player1.rank > 0 ? 26 - compareData.player1.rank : 0, 
-                compareData.player2.rank > 0 ? 26 - compareData.player2.rank : 0, 
-                `#${compareData.player1.rank || 'N/A'}`, 
-                `#${compareData.player2.rank || 'N/A'}`
-              )}
-              {renderTornadoBar(
-                "Win Rate", 
-                compareData.player1.total_matches > 0 ? parseFloat(compareData.player1.win_rate) : 0, 
-                compareData.player2.total_matches > 0 ? parseFloat(compareData.player2.win_rate) : 0, 
-                compareData.player1.total_matches > 0 ? `${compareData.player1.win_rate}%` : 'N/A', 
-                compareData.player2.total_matches > 0 ? `${compareData.player2.win_rate}%` : 'N/A'
-              )}
-              {renderTornadoBar(
-                "Matches", 
-                compareData.player1.total_matches || 0, 
-                compareData.player2.total_matches || 0
-              )}
-              {renderTornadoBar(
-                "Wins", 
-                compareData.player1.total_wins || 0, 
-                compareData.player2.total_wins || 0
-              )}
             </div>
           </section>
 

@@ -26,32 +26,10 @@ interface LeaderboardClientProps {
   initialRankings: RankingPlayer[];
 }
 
-const getPlayerRegion = (countryCode: string): string => {
-  const code = countryCode.trim().toUpperCase();
-  if (['KR', 'JP', 'PK', 'PH', 'TH', 'TW', 'CN', 'AU', 'NZ'].includes(code)) {
-    return 'Asia-Pacific';
-  }
-  if (['GB', 'FR', 'IT', 'DE', 'ES', 'RU', 'SA'].includes(code)) {
-    return 'Europe & Middle East';
-  }
-  if (['US', 'CA'].includes(code)) {
-    return 'North America';
-  }
-  if (['AR', 'BR'].includes(code)) {
-    return 'Latin America';
-  }
-  return 'International';
-};
-
 export default function LeaderboardClient({ initialRankings }: LeaderboardClientProps) {
   const [sortBy, setSortBy] = useState<'rank' | 'win_rate' | 'matches'>('rank');
-  const [selectedRegion, setSelectedRegion] = useState<string>('All');
 
-  const filteredRankings = selectedRegion === 'All'
-    ? initialRankings
-    : initialRankings.filter(p => getPlayerRegion(p.country_code) === selectedRegion);
-
-  const sortedRankings = [...filteredRankings].sort((a, b) => {
+  const sortedRankings = [...initialRankings].sort((a, b) => {
     if (sortBy === 'win_rate') {
       return parseFloat(b.win_rate) - parseFloat(a.win_rate);
     }
@@ -104,66 +82,36 @@ export default function LeaderboardClient({ initialRankings }: LeaderboardClient
         </div>
         
         {/* Controls */}
-        <div className="flex flex-col xl:flex-row items-center gap-4 self-center md:self-end w-full md:w-auto">
-          {/* Region filter */}
-          <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full md:w-auto">
-            <span className="text-xs text-gray-500 uppercase tracking-widest font-bold">Region</span>
-            <div className="inline-flex rounded-md p-0.5 bg-[#111] border border-[#2A2A2A] w-full sm:w-auto justify-center" id="region-controls">
-              {['All', 'Asia-Pacific', 'Europe & Middle East', 'North America', 'Latin America'].map((region) => {
-                const labels: Record<string, string> = {
-                  'All': 'All',
-                  'Asia-Pacific': 'APAC',
-                  'Europe & Middle East': 'EMEA',
-                  'North America': 'NA',
-                  'Latin America': 'LATAM'
-                };
-                return (
-                  <button
-                    key={region}
-                    onClick={() => setSelectedRegion(region)}
-                    className={`px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded transition-all ${
-                      selectedRegion === region ? 'bg-[#C8102E] text-white shadow' : 'text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    {labels[region]}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Sort By */}
-          <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full md:w-auto">
-            <span className="text-xs text-gray-500 uppercase tracking-widest font-bold">Sort By</span>
-            <div className="inline-flex rounded-md p-0.5 bg-[#111] border border-[#2A2A2A] w-full sm:w-auto justify-center" id="sorting-controls">
-              <button
-                id="sort-rank"
-                onClick={() => setSortBy('rank')}
-                className={`px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded transition-all ${
-                  sortBy === 'rank' ? 'bg-[#C8102E] text-white shadow' : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Rank
-              </button>
-              <button
-                id="sort-winrate"
-                onClick={() => setSortBy('win_rate')}
-                className={`px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded transition-all ${
-                  sortBy === 'win_rate' ? 'bg-[#C8102E] text-white shadow' : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Win Rate
-              </button>
-              <button
-                id="sort-matches"
-                onClick={() => setSortBy('matches')}
-                className={`px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded transition-all ${
-                  sortBy === 'matches' ? 'bg-[#C8102E] text-white shadow' : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Matches
-              </button>
-            </div>
+        <div className="flex flex-col sm:flex-row items-center gap-3 self-center md:self-end">
+          <span className="text-xs text-gray-500 uppercase tracking-widest font-bold">Sort By</span>
+          <div className="inline-flex rounded-md p-0.5 bg-[#111] border border-[#2A2A2A]" id="sorting-controls">
+            <button
+              id="sort-rank"
+              onClick={() => setSortBy('rank')}
+              className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition-all ${
+                sortBy === 'rank' ? 'bg-[#C8102E] text-white shadow' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Points Rank
+            </button>
+            <button
+              id="sort-winrate"
+              onClick={() => setSortBy('win_rate')}
+              className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition-all ${
+                sortBy === 'win_rate' ? 'bg-[#C8102E] text-white shadow' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Win Rate
+            </button>
+            <button
+              id="sort-matches"
+              onClick={() => setSortBy('matches')}
+              className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition-all ${
+                sortBy === 'matches' ? 'bg-[#C8102E] text-white shadow' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Matches Played
+            </button>
           </div>
         </div>
       </section>
