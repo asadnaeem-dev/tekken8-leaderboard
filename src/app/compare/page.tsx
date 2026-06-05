@@ -1,469 +1,135 @@
-'use client';
+import { query } from '@/lib/db';
+import CompareClient from '@/components/CompareClient';
 
-import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
+export const dynamic = 'force-dynamic';
 
-interface SimplePlayer {
-  id: string;
-  name: string;
-  liquipedia_url: string;
-  flag_emoji: string;
-  nationality: string;
-}
+export default async function ComparePage({
+  searchParams
+}: {
+  searchParams: { p1?: string; p2?: string };
+}) {
+  const p1 = searchParams.p1 || '';
+  const p2 = searchParams.p2 || '';
 
-interface ComparePlayerData {
-  id: string;
-  name: string;
-  real_name: string;
-  nationality: string;
-  country_code: string;
-  flag_emoji: string;
-  profile_image_url: string;
-  liquipedia_url: string;
-  rank: number;
-  total_twt_pts: number;
-  total_matches: number;
-  total_wins: number;
-  win_rate: string;
-  main_character_name: string;
-  main_character_portrait: string;
-}
+  // 1. Fetch all players for dropdown selectors
+  const playersRes = await query(`
+    SELECT id, name, liquipedia_url, flag_emoji, nationality 
+    FROM players 
+    ORDER BY name ASC
+  `);
 
-interface H2HMatch {
-  id: string;
-  round: string;
-  tournamentName: string;
-  date: string;
-  p1Score: number;
-  p2Score: number;
-  winnerName: string;
-  winnerId: string;
-}
+  let initialData = null;
 
-interface CompareData {
-  player1: ComparePlayerData;
-  player2: ComparePlayerData;
-  h2hStats: {
-    p1Wins: number;
-    p2Wins: number;
-    totalClashes: number;
-    verdict: string;
-  };
-  matches: H2HMatch[];
-}
+  // 2. Query matchup details directly on the server if query parameters exist
+  if (p1 && p2 && p1 !== p2) {
+    try {
+      // Query Player 1 Details
+      const p1Res = await query(`
+        SELECT 
+          p.id, p.name, p.real_name, p.nationality, p.country_code, p.flag_emoji, p.profile_image_url, p.liquipedia_url,
+          r.rank, r.total_twt_pts, r.total_matches, r.total_wins, r.win_rate,
+          c.name as main_character_name,
+          c.portrait_url as main_character_portrait
+        FROM players p
+        LEFT JOIN rankings r ON r.player_id = p.id AND r.season = '2024'
+        LEFT JOIN player_characters pc ON pc.player_id = p.id AND pc.is_main = true
+        LEFT JOIN characters c ON pc.character_id = c.id
+        WHERE LOWER(p.liquipedia_url) = LOWER($1) OR LOWER(p.name) = LOWER($2) OR p.id::text = $3
+      `, [p1, p1.replace('_', ' '), p1]);
 
-function CompareContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
+      // Query Player 2 Details
+      const p2Res = await query(`
+        SELECT 
+          p.id, p.name, p.real_name, p.nationality, p.country_code, p.flag_emoji, p.profile_image_url, p.liquipedia_url,
+          r.rank, r.total_twt_pts, r.total_matches, r.total_wins, r.win_rate,
+          c.name as main_character_name,
+          c.portrait_url as main_character_portrait
+        FROM players p
+        LEFT JOIN rankings r ON r.player_id = p.id AND r.season = '2024'
+        LEFT JOIN player_characters pc ON pc.player_id = p.id AND pc.is_main = true
+        LEFT JOIN characters c ON pc.character_id = c.id
+        WHERE LOWER(p.liquipedia_url) = LOWER($1) OR LOWER(p.name) = LOWER($2) OR p.id::text = $3
+      `, [p2, p2.replace('_', ' '), p2]);
 
-  const [playersList, setPlayersList] = useState<SimplePlayer[]>([]);
-  const [p1Slug, setP1Slug] = useState<string>('');
-  const [p2Slug, setP2Slug] = useState<string>('');
-  
-  const [compareData, setCompareData] = useState<CompareData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [shareText, setShareText] = useState('Share Matchup');
+      if (p1Res.rows.length > 0 && p2Res.rows.length > 0) {
+        const player1 = p1Res.rows[0];
+        const player2 = p2Res.rows[0];
 
-  // Search filter for dropdowns
-  const [p1Search, setP1Search] = useState('');
-  const [p2Search, setP2Search] = useState('');
-  const [showP1Dropdown, setShowP1Dropdown] = useState(false);
-  const [showP2Dropdown, setShowP2Dropdown] = useState(false);
+        // Query Match History
+        const matchesRes = await query(`
+          SELECT 
+            m.id,
+            m.round_name,
+            m.player1_score,
+            m.player2_score,
+            t.name as tournament_name,
+            t.start_date,
+            p1.name as p1_name,
+            p2.name as p2_name,
+            w.id as winner_id,
+            w.name as winner_name
+          FROM matches m
+          JOIN tournaments t ON m.tournament_id = t.id
+          JOIN players p1 ON m.player1_id = p1.id
+          JOIN players p2 ON m.player2_id = p2.id
+          JOIN players w ON m.winner_id = w.id
+          WHERE (m.player1_id = $1 AND m.player2_id = $2) 
+             OR (m.player1_id = $2 AND m.player2_id = $1)
+          ORDER BY t.start_date DESC, m.created_at DESC
+        `, [player1.id, player2.id]);
 
-  // 1. Fetch players list for selectors
-  useEffect(() => {
-    async function loadPlayers() {
-      try {
-        const res = await fetch('/api/players');
-        const data = await res.json();
-        if (data.success) {
-          setPlayersList(data.players);
-        }
-      } catch (err) {
-        console.error('Failed to load players list', err);
+        let p1Wins = 0;
+        let p2Wins = 0;
+
+        const matches = matchesRes.rows.map(m => {
+          const p1Win = m.winner_id === player1.id;
+          if (p1Win) {
+            p1Wins++;
+          } else {
+            p2Wins++;
+          }
+
+          return {
+            id: m.id,
+            round: m.round_name,
+            tournamentName: m.tournament_name,
+            date: m.start_date,
+            p1Score: m.p1_name === player1.name ? m.player1_score : m.player2_score,
+            p2Score: m.p2_name === player2.name ? m.player2_score : m.player1_score,
+            winnerName: m.winner_name,
+            winnerId: m.winner_id
+          };
+        });
+
+        initialData = {
+          player1,
+          player2,
+          h2hStats: {
+            p1Wins,
+            p2Wins,
+            totalClashes: matchesRes.rows.length,
+            verdict: p1Wins > p2Wins 
+              ? `${player1.name} leads ${p1Wins}-${p2Wins}` 
+              : p2Wins > p1Wins 
+                ? `${player2.name} leads ${p2Wins}-${p1Wins}` 
+                : p1Wins > 0 
+                  ? `Tied ${p1Wins}-${p2Wins}` 
+                  : 'No recorded clashes'
+          },
+          matches
+        };
       }
+    } catch (err) {
+      console.error('Failed to pre-render matchup comparison:', err);
     }
-    loadPlayers();
-  }, []);
-
-  // 2. Load slugs from URL parameters
-  useEffect(() => {
-    const p1 = searchParams.get('p1');
-    const p2 = searchParams.get('p2');
-    if (p1) {
-      setP1Slug(p1);
-      const player = playersList.find(p => p.liquipedia_url === p1 || p.id === p1);
-      if (player) setP1Search(player.name);
-    }
-    if (p2) {
-      setP2Slug(p2);
-      const player = playersList.find(p => p.liquipedia_url === p2 || p.id === p2);
-      if (player) setP2Search(player.name);
-    }
-  }, [searchParams, playersList]);
-
-  // 3. Fetch comparison data when both slugs are selected
-  useEffect(() => {
-    if (!p1Slug || !p2Slug) {
-      setCompareData(null);
-      return;
-    }
-
-    if (p1Slug === p2Slug) {
-      setError('Select two different combatants to compare.');
-      setCompareData(null);
-      return;
-    }
-
-    async function fetchComparison() {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`/api/compare?p1=${p1Slug}&p2=${p2Slug}`);
-        const data = await res.json();
-        if (data.success) {
-          setCompareData(data);
-          // Set search inputs to match actual player names
-          setP1Search(data.player1.name);
-          setP2Search(data.player2.name);
-        } else {
-          setError(data.error || 'Failed to generate comparison details.');
-        }
-      } catch (err: any) {
-        setError(err.message || 'An error occurred loading comparison details.');
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchComparison();
-  }, [p1Slug, p2Slug]);
-
-  const handleSelectPlayer1 = (player: SimplePlayer) => {
-    setP1Slug(player.liquipedia_url);
-    setP1Search(player.name);
-    setShowP1Dropdown(false);
-    updateURL(player.liquipedia_url, p2Slug);
-  };
-
-  const handleSelectPlayer2 = (player: SimplePlayer) => {
-    setP2Slug(player.liquipedia_url);
-    setP2Search(player.name);
-    setShowP2Dropdown(false);
-    updateURL(p1Slug, player.liquipedia_url);
-  };
-
-  const updateURL = (p1: string, p2: string) => {
-    const params = new URLSearchParams();
-    if (p1) params.set('p1', p1);
-    if (p2) params.set('p2', p2);
-    router.push(`/compare?${params.toString()}`);
-  };
-
-  const copyToClipboard = () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
-      setShareText('Copied Link!');
-      setTimeout(() => setShareText('Share Matchup'), 2000);
-    });
-  };
-
-  const filteredP1 = playersList.filter(p => 
-    p.name.toLowerCase().includes(p1Search.toLowerCase()) && p.liquipedia_url !== p2Slug
-  );
-
-  const filteredP2 = playersList.filter(p => 
-    p.name.toLowerCase().includes(p2Search.toLowerCase()) && p.liquipedia_url !== p1Slug
-  );
-
-  // Helper to compare and return styling class for high-scoring values
-  const highlightBestValue = (val1: number, val2: number, lowerIsBetter = false) => {
-    if (val1 === val2) return 'text-white';
-    const isP1Better = lowerIsBetter ? val1 < val2 : val1 > val2;
-    return isP1Better ? 'text-[#FFD700] font-black' : 'text-gray-400 font-medium';
-  };
-
-  const highlightBestValueStr = (val1: string, val2: string) => {
-    const v1 = parseFloat(val1);
-    const v2 = parseFloat(val2);
-    if (isNaN(v1) || isNaN(v2)) return 'text-white';
-    if (v1 === v2) return 'text-white';
-    return v1 > v2 ? 'text-[#FFD700] font-black' : 'text-gray-400 font-medium';
-  };
+  }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <section className="text-center md:text-left border-b border-[#2A2A2A] pb-6">
-        <h1 className="text-4xl font-black tracking-tight tekken-heading text-gradient-red">
-          Head-to-Head Compare
-        </h1>
-        <p className="text-gray-400 text-sm mt-2 font-medium">
-          Settle disputes by analyzing player records and direct encounters side-by-side.
-        </p>
-      </section>
-
-      {/* Selectors Grid */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center" id="selectors-container">
-        {/* Player 1 Selector */}
-        <div className="relative">
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Player 1</label>
-          <input
-            id="p1-selector-input"
-            type="text"
-            placeholder="Search Player 1..."
-            value={p1Search}
-            onChange={(e) => { setP1Search(e.target.value); setShowP1Dropdown(true); }}
-            onFocus={() => setShowP1Dropdown(true)}
-            className="w-full px-4 py-3 bg-[#111] border border-[#2A2A2A] rounded focus:border-[#C8102E] focus:outline-none text-white font-semibold text-sm transition-colors"
-          />
-          {showP1Dropdown && filteredP1.length > 0 && (
-            <div className="absolute z-20 w-full mt-1 max-h-60 overflow-y-auto bg-[#111] border border-[#2A2A2A] rounded shadow-lg">
-              {filteredP1.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => handleSelectPlayer1(p)}
-                  className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1A1A1A] hover:text-[#C8102E] font-medium transition-colors flex items-center justify-between"
-                >
-                  <span>{p.name}</span>
-                  <span className="text-xs text-gray-500">{p.flag_emoji} {p.nationality}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {showP1Dropdown && (
-            <div className="fixed inset-0 z-10" onClick={() => setShowP1Dropdown(false)} />
-          )}
-        </div>
-
-        {/* Player 2 Selector */}
-        <div className="relative">
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Player 2</label>
-          <input
-            id="p2-selector-input"
-            type="text"
-            placeholder="Search Player 2..."
-            value={p2Search}
-            onChange={(e) => { setP2Search(e.target.value); setShowP2Dropdown(true); }}
-            onFocus={() => setShowP2Dropdown(true)}
-            className="w-full px-4 py-3 bg-[#111] border border-[#2A2A2A] rounded focus:border-[#C8102E] focus:outline-none text-white font-semibold text-sm transition-colors"
-          />
-          {showP2Dropdown && filteredP2.length > 0 && (
-            <div className="absolute z-20 w-full mt-1 max-h-60 overflow-y-auto bg-[#111] border border-[#2A2A2A] rounded shadow-lg">
-              {filteredP2.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => handleSelectPlayer2(p)}
-                  className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-[#1A1A1A] hover:text-[#C8102E] font-medium transition-colors flex items-center justify-between"
-                >
-                  <span>{p.name}</span>
-                  <span className="text-xs text-gray-500">{p.flag_emoji} {p.nationality}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {showP2Dropdown && (
-            <div className="fixed inset-0 z-10" onClick={() => setShowP2Dropdown(false)} />
-          )}
-        </div>
-      </section>
-
-      {/* Error state */}
-      {error && (
-        <div className="p-4 bg-red-950 bg-opacity-20 border border-red-500 rounded text-red-500 text-sm font-semibold flex items-center gap-2">
-          ⚠️ {error}
-        </div>
-      )}
-
-      {/* Comparison results */}
-      {loading ? (
-        // Loading state
-        <div className="tekken-panel h-80 rounded-lg flex items-center justify-center shimmer" />
-      ) : compareData ? (
-        <div className="space-y-8 animate-fadeIn" id="compare-results">
-          {/* Side-by-Side Hero */}
-          <div className="grid grid-cols-3 items-center border border-[#2A2A2A] rounded-lg overflow-hidden bg-gradient-to-r from-[#111] via-[#0F0F0F] to-[#111]">
-            {/* Player 1 Card */}
-            <div className="col-span-1 p-6 text-center space-y-2 border-r border-[#2A2A2A] h-full flex flex-col justify-center">
-              <div className="w-16 h-16 rounded border border-gray-700 bg-[#1A1A1A] flex items-center justify-center tekken-heading font-black text-2xl text-white mx-auto shadow">
-                {compareData.player1.name.substring(0, 2).toUpperCase()}
-              </div>
-              <h3 className="tekken-heading font-bold text-lg text-white">
-                <Link href={`/players/${compareData.player1.liquipedia_url}`} className="hover:underline hover:text-[#C8102E]">
-                  {compareData.player1.name}
-                </Link>
-              </h3>
-              <p className="text-xs text-gray-500 font-semibold">{compareData.player1.flag_emoji} {compareData.player1.nationality}</p>
-            </div>
-
-            {/* Verdict VS Column */}
-            <div className="col-span-1 py-8 text-center space-y-2 flex flex-col justify-center h-full">
-              <div className="w-10 h-10 rounded bg-[#C8102E] font-black text-xs tekken-heading flex items-center justify-center text-white mx-auto animate-pulse">
-                VS
-              </div>
-              <p className="text-sm tekken-heading tracking-widest font-bold text-[#FFD700] uppercase mt-4">
-                {compareData.h2hStats.verdict}
-              </p>
-              <button
-                onClick={copyToClipboard}
-                className="inline-block px-3 py-1 bg-[#1A1A1A] hover:bg-[#C8102E] text-[10px] tracking-wider font-extrabold uppercase tekken-heading border border-[#2A2A2A] hover:border-transparent rounded transition-all mt-4"
-              >
-                {shareText}
-              </button>
-            </div>
-
-            {/* Player 2 Card */}
-            <div className="col-span-1 p-6 text-center space-y-2 border-l border-[#2A2A2A] h-full flex flex-col justify-center">
-              <div className="w-16 h-16 rounded border border-gray-700 bg-[#1A1A1A] flex items-center justify-center tekken-heading font-black text-2xl text-white mx-auto shadow">
-                {compareData.player2.name.substring(0, 2).toUpperCase()}
-              </div>
-              <h3 className="tekken-heading font-bold text-lg text-white">
-                <Link href={`/players/${compareData.player2.liquipedia_url}`} className="hover:underline hover:text-[#C8102E]">
-                  {compareData.player2.name}
-                </Link>
-              </h3>
-              <p className="text-xs text-gray-500 font-semibold">{compareData.player2.flag_emoji} {compareData.player2.nationality}</p>
-            </div>
-          </div>
-
-          {/* Stats Matrix */}
-          <section className="tekken-panel rounded-lg p-6 space-y-4">
-            <h2 className="text-lg font-bold tekken-heading text-white border-b border-[#2A2A2A] pb-3">
-              Performance Stats
-            </h2>
-            <div className="space-y-4">
-              {/* Row: TWT Points */}
-              <div className="grid grid-cols-3 text-center py-2 border-b border-[#1A1A1A] text-sm font-semibold">
-                <span className={highlightBestValue(compareData.player1.total_twt_pts || 0, compareData.player2.total_twt_pts || 0)}>
-                  {(compareData.player1.total_twt_pts || 0).toLocaleString()}
-                </span>
-                <span className="text-gray-500 uppercase text-xs tracking-wider">TWT Points</span>
-                <span className={highlightBestValue(compareData.player2.total_twt_pts || 0, compareData.player1.total_twt_pts || 0)}>
-                  {(compareData.player2.total_twt_pts || 0).toLocaleString()}
-                </span>
-              </div>
-              
-              {/* Row: Points Rank */}
-              <div className="grid grid-cols-3 text-center py-2 border-b border-[#1A1A1A] text-sm font-semibold">
-                <span className={highlightBestValue(compareData.player1.rank || 99, compareData.player2.rank || 99, true)}>
-                  #{compareData.player1.rank || 'N/A'}
-                </span>
-                <span className="text-gray-500 uppercase text-xs tracking-wider">TWT Rank</span>
-                <span className={highlightBestValue(compareData.player2.rank || 99, compareData.player1.rank || 99, true)}>
-                  #{compareData.player2.rank || 'N/A'}
-                </span>
-              </div>
-
-              {/* Row: Win Rate */}
-              <div className="grid grid-cols-3 text-center py-2 border-b border-[#1A1A1A] text-sm font-semibold">
-                <span className={highlightBestValueStr(compareData.player1.win_rate || '0', compareData.player2.win_rate || '0')}>
-                  {compareData.player1.win_rate || 'N/A'}%
-                </span>
-                <span className="text-gray-500 uppercase text-xs tracking-wider">Win Rate</span>
-                <span className={highlightBestValueStr(compareData.player2.win_rate || '0', compareData.player1.win_rate || '0')}>
-                  {compareData.player2.win_rate || 'N/A'}%
-                </span>
-              </div>
-
-              {/* Row: Matches Played */}
-              <div className="grid grid-cols-3 text-center py-2 border-b border-[#1A1A1A] text-sm font-semibold">
-                <span className={highlightBestValue(compareData.player1.total_matches || 0, compareData.player2.total_matches || 0)}>
-                  {compareData.player1.total_matches || 0}
-                </span>
-                <span className="text-gray-500 uppercase text-xs tracking-wider">Matches</span>
-                <span className={highlightBestValue(compareData.player2.total_matches || 0, compareData.player1.total_matches || 0)}>
-                  {compareData.player2.total_matches || 0}
-                </span>
-              </div>
-
-              {/* Row: Total Wins */}
-              <div className="grid grid-cols-3 text-center py-2 text-sm font-semibold">
-                <span className={highlightBestValue(compareData.player1.total_wins || 0, compareData.player2.total_wins || 0)}>
-                  {compareData.player1.total_wins || 0}
-                </span>
-                <span className="text-gray-500 uppercase text-xs tracking-wider">Wins</span>
-                <span className={highlightBestValue(compareData.player2.total_wins || 0, compareData.player1.total_wins || 0)}>
-                  {compareData.player2.total_wins || 0}
-                </span>
-              </div>
-            </div>
-          </section>
-
-          {/* Direct Encounters */}
-          <section className="tekken-panel rounded-lg p-6 space-y-4">
-            <h2 className="text-lg font-bold tekken-heading text-white border-b border-[#2A2A2A] pb-3">
-              Direct Encounters ({compareData.h2hStats.totalClashes})
-            </h2>
-            {compareData.matches.length === 0 ? (
-              <div className="py-8 text-center text-gray-500">
-                <span className="text-3xl block mb-2">🥊</span>
-                <p className="font-semibold text-gray-400">No recorded clashes — yet.</p>
-                <p className="text-xs mt-1">These players haven&apos;t met in any tracked tournament — yet.</p>
-              </div>
-            ) : (
-              <div className="space-y-4" id="direct-clashes-list">
-                {compareData.matches.map((m) => (
-                  <div
-                    key={m.id}
-                    className="flex flex-col sm:flex-row items-center justify-between p-4 rounded bg-[#161616] border border-[#232323] hover:border-gray-700 transition-colors gap-3"
-                  >
-                    <div className="text-left w-full sm:w-auto">
-                      <span className="text-xs text-gray-500 uppercase tracking-widest font-bold">{m.round}</span>
-                      <div className="text-sm font-bold text-white line-clamp-1">{m.tournamentName}</div>
-                      <div className="text-[10px] text-gray-500 mt-0.5">
-                        {new Date(m.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-                      </div>
-                    </div>
-
-                    {/* Scores */}
-                    <div className="flex items-center gap-6 font-bold">
-                      <div className="text-right">
-                        <span className={`text-sm ${m.winnerName === compareData.player1.name ? 'text-[#22C55E]' : 'text-gray-400'}`}>
-                          {compareData.player1.name}
-                        </span>
-                      </div>
-                      
-                      <div className="tekken-heading text-xl tracking-wider px-3.5 py-1 bg-[#1F1F1F] rounded">
-                        <span className={m.winnerName === compareData.player1.name ? 'text-[#22C55E]' : 'text-gray-400'}>
-                          {m.p1Score}
-                        </span>
-                        <span className="text-gray-600"> - </span>
-                        <span className={m.winnerName === compareData.player2.name ? 'text-[#22C55E]' : 'text-gray-400'}>
-                          {m.p2Score}
-                        </span>
-                      </div>
-
-                      <div className="text-left">
-                        <span className={`text-sm ${m.winnerName === compareData.player2.name ? 'text-[#22C55E]' : 'text-gray-400'}`}>
-                          {compareData.player2.name}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
-      ) : (
-        // Empty State
-        <div className="tekken-panel rounded-lg py-16 text-center text-gray-500" id="h2h-empty-state">
-          <span className="text-6xl block mb-4">🆚</span>
-          <h3 className="text-2xl tekken-heading text-gray-400 font-bold mb-2">Configure Comparison</h3>
-          <p className="text-sm max-w-sm mx-auto">
-            Select two different fighters from the dropdowns above to compare their match metrics.
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default function ComparePage() {
-  return (
-    <Suspense fallback={<div className="tekken-panel h-80 rounded-lg flex items-center justify-center shimmer text-gray-400">Loading matchup...</div>}>
-      <CompareContent />
-    </Suspense>
+    <CompareClient 
+      players={playersRes.rows} 
+      initialData={initialData} 
+      initialP1={p1} 
+      initialP2={p2} 
+    />
   );
 }
