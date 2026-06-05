@@ -268,8 +268,8 @@ export default function CompareClient({ players, initialData, initialP1, initial
       ) : compareData ? (
         <div className="space-y-8 animate-fadeIn" id="compare-results">
           {/* Side-by-Side Hero */}
-          <div className="grid grid-cols-3 items-center border border-[#2A2A2A] rounded-lg overflow-hidden bg-gradient-to-r from-[#111] via-[#0F0F0F] to-[#111]">
-            <div className="col-span-1 p-6 text-center space-y-2 border-r border-[#2A2A2A] h-full flex flex-col justify-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 items-center border border-[#2A2A2A] rounded-lg overflow-hidden bg-gradient-to-b md:bg-gradient-to-r from-[#111] via-[#0F0F0F] to-[#111]">
+            <div className="col-span-1 p-6 text-center space-y-2 border-b md:border-b-0 md:border-r border-[#2A2A2A] h-full flex flex-col justify-center">
               <div className="w-16 h-16 rounded border border-gray-700 bg-[#1A1A1A] flex items-center justify-center tekken-heading font-black text-2xl text-white mx-auto shadow">
                 {compareData.player1.name.substring(0, 2).toUpperCase()}
               </div>
@@ -296,7 +296,7 @@ export default function CompareClient({ players, initialData, initialP1, initial
               </button>
             </div>
 
-            <div className="col-span-1 p-6 text-center space-y-2 border-l border-[#2A2A2A] h-full flex flex-col justify-center">
+            <div className="col-span-1 p-6 text-center space-y-2 border-t md:border-t-0 md:border-l border-[#2A2A2A] h-full flex flex-col justify-center">
               <div className="w-16 h-16 rounded border border-gray-700 bg-[#1A1A1A] flex items-center justify-center tekken-heading font-black text-2xl text-white mx-auto shadow">
                 {compareData.player2.name.substring(0, 2).toUpperCase()}
               </div>
