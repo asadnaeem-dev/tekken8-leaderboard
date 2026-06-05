@@ -3,25 +3,93 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background-primary: #0A0A0A;
+  --background-card: #111111;
+  --background-elevated: #1A1A1A;
+  --accent-red: #C8102E;
+  --accent-gold: #FFD700;
+  --text-primary: #F5F5F5;
+  --text-secondary: #888888;
+  --win-green: #22C55E;
+  --loss-red: #EF4444;
+  --border-color: #2A2A2A;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-primary);
+  background-color: var(--background-primary);
+  font-family: var(--font-inter), sans-serif;
+  overflow-x: hidden;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-red);
+}
+
+/* Custom Utilities */
+.tekken-heading {
+  font-family: var(--font-rajdhani), sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tekken-panel {
+  background-color: var(--background-card);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tekken-panel:hover {
+  border-color: var(--accent-red);
+  box-shadow: 0 8px 30px rgba(200, 16, 46, 0.15);
+}
+
+.glow-red {
+  box-shadow: 0 0 15px rgba(200, 16, 46, 0.4);
+}
+
+.glow-gold {
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+/* Text Gradients */
+.text-gradient-red {
+  background: linear-gradient(135deg, #FF6B6B 0%, #C8102E 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #FFE066 0%, #FFD700 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Shimmer Animation for Skeletons */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
   }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #1A1A1A 25%, #252525 50%, #1A1A1A 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
 }
