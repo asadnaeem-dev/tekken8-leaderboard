@@ -88,6 +88,13 @@ TOURNAMENTS = [
     {"name": "CEOtaku 2024", "short_name": "CEOtaku24", "start_date": "2024-10-18", "end_date": "2024-10-20", "location": "Orlando, FL, USA", "country_code": "US", "tier": "TWT_MASTER", "region": "GLOBAL", "is_twt_official": True, "liquipedia_url": "CEOtaku/2024"},
     {"name": "Tekken World Tour 2024 Finals", "short_name": "TWT24F", "start_date": "2024-12-07", "end_date": "2024-12-08", "location": "San Francisco, CA, USA", "country_code": "US", "tier": "PREMIER", "region": "GLOBAL", "is_twt_official": True, "liquipedia_url": "Tekken_World_Tour/2024/Finals"},
     
+    # 2024 Community Majors
+    {"name": "Red Bull Kumite 2024", "short_name": "RBK24", "start_date": "2024-03-16", "end_date": "2024-03-17", "location": "New York City, NY, USA", "country_code": "US", "tier": "MAJOR", "region": "GLOBAL", "is_twt_official": False, "liquipedia_url": "Red_Bull_Kumite/2024"},
+    {"name": "Battle of BC 6", "short_name": "BOBC6", "start_date": "2024-03-29", "end_date": "2024-03-31", "location": "Vancouver, Canada", "country_code": "CA", "tier": "MAJOR", "region": "GLOBAL", "is_twt_official": False, "liquipedia_url": "Battle_of_BC/6"},
+    {"name": "The Mixup 2024", "short_name": "MIXUP24", "start_date": "2024-04-13", "end_date": "2024-04-14", "location": "Lyon, France", "country_code": "FR", "tier": "MAJOR", "region": "GLOBAL", "is_twt_official": False, "liquipedia_url": "The_Mixup/2024"},
+    {"name": "DreamHack Dallas 2024", "short_name": "DHD24", "start_date": "2024-05-31", "end_date": "2024-06-02", "location": "Dallas, TX, USA", "country_code": "US", "tier": "MAJOR", "region": "GLOBAL", "is_twt_official": False, "liquipedia_url": "DreamHack_Dallas/2024"},
+    {"name": "Frosty Faustings XVI", "short_name": "FFXVI", "start_date": "2024-01-25", "end_date": "2024-01-28", "location": "Lombard, IL, USA", "country_code": "US", "tier": "MAJOR", "region": "GLOBAL", "is_twt_official": False, "liquipedia_url": "Frosty_Faustings/XVI"},
+
     # 2025
     {"name": "EVO Japan 2025", "short_name": "EVOJP25", "start_date": "2025-04-25", "end_date": "2025-04-27", "location": "Tokyo, Japan", "country_code": "JP", "tier": "TWT_MASTER", "region": "GLOBAL", "is_twt_official": True, "liquipedia_url": "EVO_Japan/2025"},
     {"name": "Combo Breaker 2025", "short_name": "CB25", "start_date": "2025-05-23", "end_date": "2025-05-25", "location": "Schaumburg, IL, USA", "country_code": "US", "tier": "TWT_MASTER", "region": "GLOBAL", "is_twt_official": True, "liquipedia_url": "Combo_Breaker/2025"},
