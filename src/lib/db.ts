@@ -1,6 +1,10 @@
 import { Pool, QueryResult, QueryResultRow } from 'pg';
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:wallsplat_secret@localhost:5432/wallsplat';
+const connectionString = 
+  process.env.DATABASE_URL || 
+  process.env.POSTGRES_URL || 
+  process.env.SUPABASE_DATABASE_URL || 
+  'postgresql://postgres:wallsplat_secret@localhost:5432/wallsplat';
 
 let pool: Pool;
 
