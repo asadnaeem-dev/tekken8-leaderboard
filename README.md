@@ -1,6 +1,6 @@
 # WallSplat.gg - Tekken 8 World Tour Leaderboard & Analytics
 
-WallSplat.gg is a premium web application designed to track, scrape, and analyze the standings, player stats, and head-to-head match histories of the top 25 players in the Tekken World Tour (TWT). Built with a modern Next.js 14 frontend, a PostgreSQL database, and an autonomous Python web scraping engine, the app provides real-time leaderboard statistics, detailed player profiles, interactive matchups, and a secure administration control panel.
+WallSplat.gg is a premium web application designed to track, scrape, and analyze the standings, player stats, and head-to-head match histories of the top 25 players in the Tekken World Tour (TWT). [...]
 
 ---
 
@@ -9,7 +9,7 @@ WallSplat.gg is a premium web application designed to track, scrape, and analyze
 * **Dynamic Leaderboard:** Real-time top 25 player rankings with clean sorting capabilities for points, win rates, and matches played.
 * **Head-to-Head Compare Tool:** Side-by-side player comparisons detailing career records, win rates, and direct head-to-head match history clashes.
 * **Detailed Fighter Profiles:** Custom profiles featuring player bios, recent match logs, and visual progress bars representing character pool usage percentages.
-* **Autonomous Python Scraper:** Web scraper powered by BeautifulSoup4 and Playwright that parses Liquipedia standings and bracket placements, automatically rebuilding player win rates and cached rankings.
+* **Autonomous Python Scraper:** Web scraper powered by BeautifulSoup4 and Playwright that parses Liquipedia standings and bracket placements, automatically rebuilding player win rates and cached [...]
 * **Authentic Bracket Simulator:** Simulates realistic pool stages and early bracket matches to generate authentic career win rates (65%–90%) and match statistics for elite pro players.
 * **Interactive Admin Dashboard:** Secure dashboard providing real-time scraper logging, status checks, and manual sync controls.
 * **Instant Load Times (SSR):** Optimized Next.js Server-Side Rendering (SSR) queries the database directly on the server, ensuring immediate HTML generation and zero-skeleton load times.
@@ -110,7 +110,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### 1. Supabase (Database)
 * Provision a free PostgreSQL database on Supabase.
-* Locate your **Pooler Connection String** in the Supabase Dashboard under **Project Settings > Database > Connection Pooler**. Make sure to use the **Session** or **Transaction** mode connection string (Port `6543` / `5432`) to bypass serverless IPv6 routing restrictions.
+* Locate your **Pooler Connection String** in the Supabase Dashboard under **Project Settings > Database > Connection Pooler**. Make sure to use the **Session** or **Transaction** mode connection[...]
 
 ### 2. Vercel (Frontend Hosting)
 * Import the repository into Vercel.
@@ -137,6 +137,12 @@ The interface features a custom premium gamer design:
 * **Character Pool Visualization:** Custom visual percentage meters representing usage of characters.
 * **Leaderboards:** Sorted tabular data with clean status flags, badges, and region tags.
 * **Responsiveness:** Fluid grid columns adapting dynamically to desktop, tablet, and mobile screens.
+
+---
+
+## 📝 Contributing
+
+Contributions are welcome! Please follow the established code patterns and ensure all tests pass before submitting a pull request. For major changes, please open an issue first to discuss your proposed changes.
 
 ---
 
