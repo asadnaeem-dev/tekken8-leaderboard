@@ -1,5 +1,12 @@
 # WallSplat.gg - Tekken 8 World Tour Leaderboard & Analytics
 
+[![Next.js](https://img.shields.io/badge/Next.js-14.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Supabase](https://img.shields.io/badge/Database-Supabase-3ECF8E?style=flat-square&logo=supabase)](https://supabase.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+[![GitHub Achievement](https://img.shields.io/badge/Achievement-YOLO-ff69b4?style=flat-square&logo=github)](https://github.com/collections/github-achievements)
+
 WallSplat.gg is a premium web application designed to track, scrape, and analyze the standings, player stats, and head-to-head match histories of the top 25 players in the Tekken World Tour (TWT). Built with a modern Next.js 14 frontend, a PostgreSQL database, and an autonomous Python web scraping engine, the app provides real-time leaderboard statistics, detailed player profiles, interactive matchups, and a secure administration control panel.
 
 ---
